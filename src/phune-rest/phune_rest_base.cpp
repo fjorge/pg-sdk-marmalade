@@ -34,20 +34,13 @@ PhuneRestBase::PhuneRestBase()
 		if ((int32)s3eFileRead(pFileData, 1, fileSize, cookie_file) == fileSize)
 		{
 			IwTrace(PHUNE, ("Using Cookie from previous session %s", pFileData));
-
-			//deprecated to remove after server supports the authorization header
-			std::string cookie_prefix = "JSESSIONID=";
-			cookie_prefix.append(pFileData);
-			http_object->SetRequestHeader("Cookie", cookie_prefix.c_str());
-
-			std::string authorization_prefix = "Bearer ";
-			authorization_prefix.append(pFileData);
-			http_object->SetRequestHeader("Authorization", authorization_prefix.c_str());
-
+            
+            cookieSession = std::string(pFileData);
 		}
 		else
 		{
 			IwTrace(PHUNE, ("Could not read from Cookie file"));
+            cookieSession = "";
 			//s3eFree(pFileData);
 		}
 
@@ -55,10 +48,12 @@ PhuneRestBase::PhuneRestBase()
 
 	}
 	else{
+        cookieSession = "";
 		IwTrace(PHUNE, ("Could not find Cookie file"));
 	}
 
 }
+
 
 
 PhuneRestBase::~PhuneRestBase()
@@ -780,6 +775,18 @@ RequestData::RequestData(const char *resource, CIwHTTP *http_object, CIwHTTP::Se
 	this->onResult = onResult;
 	this->http_object = http_object;
 	this->userData = userData;
+    
+    if(cookieSession != ""){
+        //deprecated to remove after server supports the authorization header
+        std::string cookie_prefix = "JSESSIONID=";
+        cookie_prefix.append(cookieSession);
+        http_object->SetRequestHeader("Cookie", cookie_prefix.c_str());
+        
+        std::string authorization_prefix = "Bearer ";
+        authorization_prefix.append(cookieSession);
+        http_object->SetRequestHeader("Authorization", authorization_prefix.c_str());
+    }
+    
 
 	this->result = NULL;
 
@@ -867,6 +874,8 @@ int32 RequestData::GotHeaders(void*, void *userData)
 				s3eFilePrintf(cookie_file, strCookie.c_str());
 
 				s3eFileClose(cookie_file);
+                
+                cookieSession = std::string(strCookie);
 			}
 			else{
 				IwTrace(PHUNE, ("Could not create Cookie file"));

@@ -213,6 +213,8 @@ public:
 	static s3eCallback _onError;
 
 	int32 removeOngoingRequest();
+    
+    
 
 protected:
 	/*
@@ -244,6 +246,7 @@ inline static void*& objectToAppend(){
 static int64 lib_time;
 static int64 server_time;
 
+static std::string cookieSession;
 
 
 //define the template functions
